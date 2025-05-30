@@ -56,21 +56,27 @@ const RecipeDetails = () => {
       // Optimistically update the existing review in state
       temporaryId = editingReview.id;
       setReviews((prevReviews) =>
-        prevReviews.map((rating) =>
-          rating.id === temporaryId ? { ...reviews, ...reviewInfo } : rating
+        prevReviews.map((review) =>
+          review.id === temporaryId ? { ...review, ...reviewInfo } : review
         )
       );
     } else {
+      // Check if user already has a review
+      const existingReview = reviews.find(review => review.user.id === parseInt(reviewInfo.userId));
+      if (existingReview) {
+        toast.error("You have already reviewed this recipe");
+        return;
+      }
+
       // Optimistically add the new review to state
       temporaryId = nanoid(); // Temporary ID for optimistic update
       setReviews((prevReviews) => [
         ...prevReviews,
-        { ...reviewInfo, id: temporaryId }, // Use temporary ID for UI update
+        { ...reviewInfo, id: temporaryId, user: { id: parseInt(reviewInfo.userId) } }, // Use temporary ID for UI update
       ]);
     }
 
     try {
-      console.log("The review data :", { recipeId, reviewInfo });
       await addNewOrUpdateReview({ recipeId, reviewInfo });
       toast.success(
         editingReview

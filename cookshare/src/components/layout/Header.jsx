@@ -74,7 +74,7 @@ const Header = () => {
                 <Dropdown.Item href="/profile">
                   <div style={{ display: "flex", flexDirection: "column" }}>
                     <span style={{ fontSize: 14, fontWeight: "bold" }}>View Profile</span>
-                    <span style={{ color: "gray", fontSize: 12 }}>u/{userName}</span>
+                    <span style={{ color: "gray", fontSize: 12 }}>{userName}</span>
                   </div>
                 </Dropdown.Item>
                 <Dropdown.Item href="/settings">Settings</Dropdown.Item>

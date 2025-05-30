@@ -150,6 +150,20 @@ export const getUser = async (userName) => {
   }
 };
 
+export const checkUserLike = async (recipeId, userId) => {
+  try {
+    const response = await api.get("/likes", {
+      params: { recipeId, userId }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 
 
 
