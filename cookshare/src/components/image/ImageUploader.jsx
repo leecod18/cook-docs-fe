@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Form } from "react-bootstrap";
 import { toast, ToastContainer } from "react-toastify";
 import { updateImage, uploadImage } from "../services/RecipeService";
+import { api } from "../services/api";
 
 const ImageUploader = ({ recipeId, existingImageId }) => {
   const fileInputRef = useRef(null);
@@ -25,15 +26,23 @@ const ImageUploader = ({ recipeId, existingImageId }) => {
     try {
       let result;
       if (existingImageId) { 
-        console.log("Image already exists")
-        result = await updateImage({ imageId: existingImageId, file: image });
-        toast.success("Image updated successfully");
+        // Xóa ảnh cũ trước
+        await api.delete(`/images/image/${existingImageId}/delete`);
+        // Sau đó upload ảnh mới
+        result = await uploadImage({ recipeId, file: image });
+        toast.success("Image updated successfully! Redirecting to home...");
         clearFileInput();
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
       } else {  
          console.log("New Image");
         result = await uploadImage({ recipeId, file: image });
-        toast.success(result.message);
+        toast.success("Upload image successfully! Redirecting to home...");
         clearFileInput();
+        setTimeout(() => {
+          window.location.href = "/";
+        }, 1500);
       }
     } catch (error) {
       toast.error(error.message);

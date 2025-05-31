@@ -1,17 +1,17 @@
 import { api } from "./api";
 
-export const likeRecipe = async (recipeId) => {
+export const likeRecipe = async (recipeId, username) => {
   try {
-    const response = await api.post(`/likes/recipe/${recipeId}/like`);
+    const response = await api.post(`/likes/recipe/${recipeId}/like/${username}`);
     return response.data;
   } catch (error) {
     throw error;
   }
 };
 
-export const unLikeRecipe = async (recipeId) => {
+export const unLikeRecipe = async (recipeId, username) => {
   try {
-    const response = await api.put(`/likes/recipe/${recipeId}/decrement-like`);
+    const response = await api.put(`/likes/recipe/${recipeId}/like/${username}`);
     return response.data;
   } catch (error) {
     throw error;
@@ -71,7 +71,7 @@ export const deleteReview = async ({ ratingId, recipeId }) => {
   try {
     const response = await api.delete(`/reviews/delete`, {
       params: {
-        ratingId,
+        reviewId: ratingId,
         recipeId,
       },
     });
@@ -102,16 +102,39 @@ export const deleteRecipe = async ({ recipeId }) => {
 
 
 export const uploadImage = async ({ recipeId, file }) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("recipeId", recipeId);
-  try {
-    const response = await api.post("/images/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+  // Nếu là ảnh user, truyền userId và imageType=1
+  // Nếu là ảnh recipe, truyền recipeId và imageType=2
+  const userId = null; // hoặc lấy từ localStorage nếu là ảnh user
+  const imageType = 2; // 1: user, 2: recipe
+
+  // Đọc file thành base64
+  const toBase64 = file =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        // Loại bỏ tiền tố "data:image/png;base64," hoặc tương tự
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = error => reject(error);
     });
-    return response;
+
+  const fileContent = await toBase64(file);
+
+  const imageRequest = {
+    fileName: file.name,
+    fileContent,
+    userId,
+    recipeId,
+    imageType,
+  };
+
+  try {
+    const response = await api.post("/images/upload", imageRequest, {
+      headers: { "Content-Type": "application/json" },
+    });
+    return response.data;
   } catch (error) {
     throw error;
   }
@@ -155,9 +178,11 @@ export const checkUserLike = async (recipeId, userId) => {
     const response = await api.get("/likes", {
       params: { recipeId, userId }
     });
+    console.log('Test',response.data.length);
     return response.data;
   } catch (error) {
     if (error.response && error.response.status === 404) {
+      // console.log(error.response.data);
       return null;
     }
     throw error;

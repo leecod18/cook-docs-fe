@@ -14,6 +14,9 @@ const Header = () => {
       setUserName(storedUsername);
     };
     checkLoginStatus();
+
+    window.addEventListener("userChanged", checkLoginStatus);
+    return () => window.removeEventListener("userChanged", checkLoginStatus);
   }, []);
 
   const handleLogout = async () => {
@@ -36,7 +39,7 @@ const Header = () => {
   };
 
   return (
-    <Navbar expand="lg" className="navbar mt-2">
+    <Navbar expand="lg" className="navbar">
       <Navbar.Brand className="logo" style={{ color: "white", fontSize: "28px" }}>
         <a href="/" className="nav-links">
           CookDocs

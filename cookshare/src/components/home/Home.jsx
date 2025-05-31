@@ -7,6 +7,7 @@ import CategoryFilter from "../common/CategoryFilter";
 import { getCurrentUser } from "../services/UserService";
 import SearchView from "../common/SearchView";
 import Pagination from "react-bootstrap/Pagination";
+import { useLocation } from "react-router-dom";
 
 const Home = () => {
   const [recipes, setRecipes] = useState([]);
@@ -17,22 +18,35 @@ const Home = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const recipesPerPage = 8; // hoặc 6, 9 tùy ý
+  const location = useLocation();
 
   // Check login status on mount
   useEffect(() => {
-    getCurrentUser().then(user => {
-      if (user) {
-        localStorage.setItem("userId", user.id);
-        localStorage.setItem("username", user.userName);
-      } else {
+    // Kiểm tra param login_success, code, token
+    const params = new URLSearchParams(location.search);
+    const loginSuccess = params.get("login_success");
+    const code = params.get("code");
+    const token = params.get("token");
+    const isRedirectAfterLogin = loginSuccess === "true" || code || token;
+
+    if (isRedirectAfterLogin) {
+      getCurrentUser().then(user => {
+        if (user) {
+          localStorage.setItem("userId", user.id);
+          localStorage.setItem("username", user.userName);
+          window.dispatchEvent(new Event("userChanged"));
+        } else {
+          localStorage.removeItem("userId");
+          localStorage.removeItem("username");
+          window.dispatchEvent(new Event("userChanged"));
+        }
+      }).catch(() => {
         localStorage.removeItem("userId");
         localStorage.removeItem("username");
-      }
-    }).catch(() => {
-      localStorage.removeItem("userId");
-      localStorage.removeItem("username");
-    });
-  }, []);
+        window.dispatchEvent(new Event("userChanged"));
+      });
+    }
+  }, [location.search]);
 
   useEffect(() => {
     const fetchRecipes = async () => {

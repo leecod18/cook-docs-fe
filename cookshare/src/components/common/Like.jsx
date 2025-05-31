@@ -12,6 +12,7 @@ const Like = ({ recipeId }) => {
   const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
   const userId = localStorage.getItem("userId");
+  const username = localStorage.getItem("username");
 
   useEffect(() => {
     const fetchLikes = async () => {
@@ -31,21 +32,16 @@ const Like = ({ recipeId }) => {
   }, [recipeId, userId]);
 
   const handleLikeClick = async () => {
-    if (!userId) {
+    if (!userId || !username) {
       // Redirect to login if user is not logged in
       window.location.href = "/login";
       return;
     }
 
     try {
-      if (!hasLiked) {
-        await likeRecipe(recipeId);
-        setLikes(likes + 1);
-      } else {
-        await unLikeRecipe(recipeId);
-        setLikes(likes - 1);
-      }
-      setHasLiked((prevLike) => !prevLike);
+      await likeRecipe(recipeId, username);
+      setHasLiked((prev) => !prev);
+      setLikes((prev) => hasLiked ? prev - 1 : prev + 1);
     } catch (error) {
       console.error(error);
     }

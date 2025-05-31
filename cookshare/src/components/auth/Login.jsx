@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Container, Card, Button, Alert } from "react-bootstrap";
+import { Container, Card, Button, Alert, Form } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "../../index.css";
+import { getCurrentUser } from "../services/UserService";
 
 const Login = () => {
     const [errorMessage, setErrorMessage] = useState(null);
@@ -71,85 +72,33 @@ const Login = () => {
         const checkAuthStatus = async () => {
             try {
                 console.log("Checking auth status...");
-                
-                // Kiểm tra URL hiện tại
                 const currentUrl = window.location.href;
-                console.log("Current URL:", currentUrl);
-                
-                // Kiểm tra các tham số URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const loginSuccess = urlParams.get('login_success');
                 const code = urlParams.get('code');
                 const token = urlParams.get('token');
-                
-                console.log("URL params - login_success:", loginSuccess);
-                console.log("URL params - code:", code);
-                console.log("URL params - token:", token);
-                
-                // Kiểm tra xem có phải là redirect sau khi đăng nhập không
                 const isRedirectAfterLogin = 
                     loginSuccess === 'true' || 
                     code || 
                     token  ;
-                
                 if (isRedirectAfterLogin) {
                     console.log("Detected redirect after login. Fetching user data...");
-                    
-                    // Thử gọi API để lấy thông tin người dùng
-                    const response = await fetch("http://localhost:8080/api/users/register", {
-                        method: "GET",
-                        credentials: "include",
-                        headers: {
-                            "Accept": "application/json"
-                        }
-                    });
-                    
-                    console.log("API response status:", response.status);
-                    
-                    if (response.ok) {
-                        let userData;
-                        const contentType = response.headers.get("content-type");
-                        
-                        if (contentType && contentType.includes("application/json")) {
-                            userData = await response.json();
-                            console.log("User data from API (JSON):", userData);
-                        } else {
-                            const textData = await response.text();
-                            console.log("User data from API (Text):", textData);
-                            
-                            // Thử chuyển đổi text thành JSON
-                            try {
-                                userData = JSON.parse(textData);
-                                console.log("Parsed text data to JSON:", userData);
-                            } catch (e) {
-                                console.log("Could not parse as JSON, using as text");
-                                userData = textData;
-                            }
-                        }
-                        
-                        // Lưu username vào localStorage
-                        const saveSuccess = saveUsernameToLocalStorage(userData);
-                        
-                        if (saveSuccess) {
+                    try {
+                        const user = await getCurrentUser();
+                        if (user) {
+                            localStorage.setItem("userId", user.id);
+                            localStorage.setItem("username", user.userName || user.name || user.email || "User");
+                            localStorage.setItem("email", user.email || "");
                             setSuccessMessage("Đăng nhập thành công! Chào mừng đến với CookDocs.");
-                            
-                            // Chuyển hướng đến trang /home sau 1 giây
                             setTimeout(() => {
                                 window.location.href = "/home";
                             }, 1000);
                         } else {
-                            setErrorMessage("Đăng nhập thành công nhưng không thể lưu thông tin người dùng.");
+                            setErrorMessage("Đăng nhập thành công nhưng không thể lấy thông tin người dùng.");
                         }
-                    } else {
-                        console.error("Failed to get user data from API");
-                        
-                        // Thử phương án dự phòng - lưu một username mặc định
-                        console.log("Trying fallback - saving default username");
-                        localStorage.setItem("username", "User");
-                        
+                    } catch (error) {
                         setErrorMessage("Không thể lấy thông tin người dùng. Đã sử dụng tên người dùng mặc định.");
-                        
-                        // Chuyển hướng đến trang /home sau 2 giây
+                        localStorage.setItem("username", "User");
                         setTimeout(() => {
                             window.location.href = "/home";
                         }, 2000);
@@ -165,7 +114,6 @@ const Login = () => {
                 setIsCheckingAuth(false);
             }
         };
-        
         checkAuthStatus();
     }, []);
 
@@ -196,97 +144,143 @@ const Login = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundImage: "linear-gradient(to right, #f5f7fa, #f8e8ff)",
+                background: "#f6f7f8",
             }}
         >
-            <Container className="py-5" style={{ maxWidth: "500px" }}>
+            <Container className="py-5" style={{ maxWidth: "420px" }}>
                 <Card
                     style={{
-                        borderRadius: "15px",
+                        borderRadius: "16px",
                         border: "none",
-                        boxShadow: "0 10px 30px rgba(138, 43, 226, 0.1)",
+                        boxShadow: "0 4px 24px 0 rgba(60, 60, 60, 0.18)",
+                        background: "#fff",
                     }}
                 >
-                    <Card.Header
-                        style={{
-                            backgroundColor: "#8a2be2",
-                            color: "white",
-                            borderRadius: "15px 15px 0 0",
-                            padding: "20px",
-                        }}
-                        className="text-center"
-                    >
-                        <h3 className="mb-0">🍳 Đăng Nhập Vào CookDocs 🥘</h3>
-                    </Card.Header>
                     <Card.Body className="px-4 py-4">
-                        {errorMessage && <Alert variant="danger">{errorMessage}</Alert>}
-                        {successMessage && <Alert variant="success">{successMessage}</Alert>}
-                        {debugInfo && (
-                            <Alert variant="info" className="mt-2">
-                                <details>
-                                    <summary>Debug Info</summary>
-                                    <pre>{debugInfo}</pre>
-                                </details>
-                            </Alert>
-                        )}
-                        <div className="d-flex flex-column gap-3">
+                        <div className="text-center mb-2">
+                            <h2 style={{ fontWeight: 700, fontSize: "2rem", marginBottom: 8 }}>Đăng nhập</h2>
+                            <div style={{ fontSize: "1rem", color: "#7c7c7c" }}>
+                                Bằng việc tiếp tục, bạn đồng ý với
+                                <a href="#" style={{ color: "#0079d3", textDecoration: "none", margin: "0 4px" }}>Điều khoản</a>
+                                và
+                                <a href="#" style={{ color: "#0079d3", textDecoration: "none", margin: "0 4px" }}>Chính sách</a>
+                                của chúng tôi.
+                            </div>
+                        </div>
+                        <div className="d-flex flex-column gap-3 mt-4 mb-3">
                             <Button
                                 onClick={handleGoogleLogin}
                                 style={{
-                                    backgroundColor: "#8a2be2",
-                                    borderColor: "#8a2be2",
-                                    color: "white",
-                                    borderRadius: "8px",
+                                    backgroundColor: "#fff",
+                                    borderColor: "#e6e6e6",
+                                    color: "#1a1a1b",
+                                    borderRadius: "999px",
                                     padding: "10px 15px",
-                                    fontWeight: "600",
+                                    fontWeight: 600,
                                     width: "100%",
-                                    height: "50px",
-                                    display: "grid",
-                                    gridTemplateColumns: "auto 1fr",
+                                    height: "48px",
+                                    display: "flex",
                                     alignItems: "center",
                                     gap: "10px",
+                                    boxShadow: "0 1px 2px rgba(60,60,60,0.08)",
                                 }}
                                 disabled={isLoading}
                             >
                                 <img
                                     src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
                                     alt="Google Logo"
-                                    style={{
-                                        width: "20px",
-                                        height: "20px",
-                                        borderRadius: "50%",
-                                    }}
+                                    style={{ width: "22px", height: "22px", borderRadius: "50%" }}
                                 />
-                                <span style={{ textAlign: "center", width: "100%" }}>Đăng nhập bằng Google</span>
+                                <span style={{ flex: 1, textAlign: "center", fontWeight: 500 }}>Đăng nhập với Google</span>
                             </Button>
                             <Button
                                 onClick={handleFacebookLogin}
                                 style={{
-                                    backgroundColor: "#3b5998",
-                                    borderColor: "#3b5998",
-                                    color: "white",
-                                    borderRadius: "8px",
+                                    backgroundColor: "#fff",
+                                    borderColor: "#e6e6e6",
+                                    color: "#1a1a1b",
+                                    borderRadius: "999px",
                                     padding: "10px 15px",
-                                    fontWeight: "600",
+                                    fontWeight: 600,
                                     width: "100%",
-                                    height: "50px",
-                                    display: "grid",
-                                    gridTemplateColumns: "auto 1fr",
+                                    height: "48px",
+                                    display: "flex",
                                     alignItems: "center",
                                     gap: "10px",
+                                    boxShadow: "0 1px 2px rgba(60,60,60,0.08)",
                                 }}
                                 disabled={isLoading}
                             >
                                 <img
                                     src="https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_%282019%29.png"
                                     alt="Facebook Logo"
+                                    style={{ width: "22px", height: "22px", borderRadius: "50%" }}
+                                />
+                                <span style={{ flex: 1, textAlign: "center", fontWeight: 500 }}>Đăng nhập với Facebook</span>
+                            </Button>
+                        </div>
+                        <div className="d-flex align-items-center my-3">
+                            <div style={{ flex: 1, height: 1, background: "#edeff1" }} />
+                            <span style={{ margin: "0 12px", color: "#878a8c", fontWeight: 600 }}>OR</span>
+                            <div style={{ flex: 1, height: 1, background: "#edeff1" }} />
+                        </div>
+                        <Form>
+                            <Form.Group className="mb-2" controlId="formBasicEmail">
+                                <Form.Label style={{ fontSize: "0.95rem", color: "#878a8c", marginBottom: 2 }}>Email or username</Form.Label>
+                                <Form.Control
+                                    type="email"
+                                    placeholder="Email or username"
                                     style={{
-                                        width: "20px",
-                                        height: "20px",
+                                        borderRadius: "12px",
+                                        border: "1px solid #edeff1",
+                                        padding: "14px 16px",
+                                        fontSize: "1rem",
+                                        background: "#f6f7f8",
+                                        color: "#1a1a1b",
                                     }}
                                 />
-                                <span style={{ textAlign: "center", width: "100%" }}>Đăng nhập bằng Facebook</span>
+                                <div style={{ color: "#ff585b", fontSize: 18, marginTop: -2 }}>*</div>
+                            </Form.Group>
+                            <Form.Group className="mb-2" controlId="formBasicPassword">
+                                <Form.Label style={{ fontSize: "0.95rem", color: "#878a8c", marginBottom: 2 }}>Password</Form.Label>
+                                <Form.Control
+                                    type="password"
+                                    placeholder="Password"
+                                    style={{
+                                        borderRadius: "12px",
+                                        border: "1px solid #edeff1",
+                                        padding: "14px 16px",
+                                        fontSize: "1rem",
+                                        background: "#f6f7f8",
+                                        color: "#1a1a1b",
+                                    }}
+                                />
+                                <div style={{ color: "#ff585b", fontSize: 18, marginTop: -2 }}>*</div>
+                            </Form.Group>
+                            <div className="mb-3">
+                                <a href="#" style={{ color: "#0079d3", fontSize: "0.98rem", textDecoration: "none" }}>Forgot password?</a>
+                            </div>
+                            <Button
+                                type="submit"
+                                style={{
+                                    width: "100%",
+                                    borderRadius: "999px",
+                                    background: "#edeff1",
+                                    color: "#a8aaab",
+                                    border: "none",
+                                    fontWeight: 700,
+                                    fontSize: "1.1rem",
+                                    height: "48px",
+                                    marginBottom: 8,
+                                    cursor: "not-allowed",
+                                }}
+                                disabled
+                            >
+                                Log In
                             </Button>
+                        </Form>
+                        <div className="text-center mt-3" style={{ fontSize: "1rem" }}>
+                            New to CookDocs? <a href="#" style={{ color: "#0079d3", fontWeight: 600, textDecoration: "none" }}>Sign Up</a>
                         </div>
                     </Card.Body>
                 </Card>

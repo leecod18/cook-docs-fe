@@ -4,10 +4,10 @@ const ImageDownloader = ({ recipeId }) => {
   const [recipeImage, setRecipeImage] = useState(null);
 
   useEffect(() => {
-    const fetchRecipeImage = async (id) => {
+    const fetchRecipeImage = async (recipeId) => {
       try {
         const response = await fetch(
-          `http://localhost:8080/api/images/image/download/${id}`
+          `http://localhost:8080/api/images/image/download/${recipeId}`
         );
         const blobImage = await response.blob();
         const reader = new FileReader();

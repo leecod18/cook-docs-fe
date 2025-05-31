@@ -29,7 +29,6 @@ const RecipeForm = () => {
     nationality: "",
     instructions: "",
     ingredients: [""],
-    userName: userName,
   });
 
   const handleIngredientChange = (index, value) => {
@@ -71,6 +70,12 @@ const RecipeForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const userId = localStorage.getItem("userId");
+    if (!userId) {
+      toast.error("Bạn cần đăng nhập để tạo công thức!");
+      return;
+    }
+
     const recipeData = {
       recipe: {
         title: formData.title,
@@ -82,9 +87,7 @@ const RecipeForm = () => {
         instructions: formData.instructions,
         ingredients: formData.ingredients,
       },
-      user: {
-        userName: formData.userName,
-      },
+      userId: userId,
     };
 
     try {
@@ -108,7 +111,6 @@ const RecipeForm = () => {
       nationality: "",
       instructions: "",
       ingredients: [""],
-      userName: "",
     });
     };
     

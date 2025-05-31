@@ -14,6 +14,7 @@ import ImageUpdater from "./components/image/ImageUpdater";
 import RecipeForm from "./components/recipe/RecipeForm";
 import Login from "./components/auth/Login";
 import Aboutus from "./components/Aboutus";
+import Profile from "./components/profile/Profile";
 
 function App() {
   const router = createBrowserRouter(
@@ -38,6 +39,7 @@ function App() {
 
         <Route path='/login' element={<Login />} />
         <Route path='/aboutus' element={<Aboutus />} />
+        <Route path='/profile' element={<Profile />} />
       </Route>
     )
   );
