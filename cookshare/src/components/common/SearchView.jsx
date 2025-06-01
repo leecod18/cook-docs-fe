@@ -10,7 +10,7 @@ const SearchView = ({ onSearch }) => {
     <input
       type="text"
       className="form-control"
-      style={{ maxWidth: 400 }}
+      style={{ maxWidth: 800 }}
       placeholder="Search recipes by name..."
       value={value}
       onChange={handleChange}
