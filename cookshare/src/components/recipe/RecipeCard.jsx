@@ -25,11 +25,18 @@ const RecipeCard = ({ recipe }) => {
               <Col>
                 <Like recipeId={recipe.id} likes={recipe.likeCount} />
               </Col>
-              <Col>
-                <Card.Text className='rating'>
-                  <RatingStars rating={recipe.averageRating} />
-                </Card.Text>
-              </Col>
+               <Col>
+                    <Card.Text className='rating d-flex justify-content-end align-items-center' style={{lineHeight: 1}}>
+                      <span style={{display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle'}}>
+                        <span style={{display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle'}}>
+                          <RatingStars rating={recipe.averageRating} />
+                        </span>
+                        <span className="ms-1" style={{verticalAlign: 'middle'}}>
+                          ({recipe.totalRateCount})
+                        </span>
+                      </span>
+                    </Card.Text>
+                  </Col>
             </Row>
             <hr />
 

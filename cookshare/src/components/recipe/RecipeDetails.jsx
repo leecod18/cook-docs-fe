@@ -37,18 +37,20 @@ const RecipeDetails = () => {
     setCurrentUserId(userId ? parseInt(userId) : null);
   }, []);
 
+  // Đưa fetchRecipe ra ngoài useEffect để có thể gọi lại
+  const fetchRecipe = async () => {
+    try {
+      const response = await getRecipeById(recipeId);
+      setRecipe(response);
+      setReviews(response.reviews);
+      setIsLoading(false);
+    } catch (error) {
+      console.error(error);
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchRecipe = async () => {
-      try {
-        const response = await getRecipeById(recipeId);
-        setRecipe(response);
-        setReviews(response.reviews);
-        setIsLoading(false);
-      } catch (error) {
-        console.error(error);
-        setIsLoading(false);
-      }
-    };
     fetchRecipe();
   }, [recipeId]);
 
@@ -86,6 +88,8 @@ const RecipeDetails = () => {
           ? "Your review has been updated!"
           : "Thanks for your feedback!"
       );
+      // Gọi lại fetchRecipe để cập nhật dữ liệu mới nhất
+      fetchRecipe();
     } catch (error) {
       console.log("The error occurred: ", error);
       toast.error(error.message);
@@ -115,6 +119,8 @@ const RecipeDetails = () => {
     try {
       await deleteReview({ ratingId, recipeId });
       toast.success("Review deleted successfully!");
+      // Gọi lại fetchRecipe để cập nhật dữ liệu mới nhất
+      fetchRecipe();
     } catch (error) {
       console.log("The error :", error);
       toast.error(error.message);
