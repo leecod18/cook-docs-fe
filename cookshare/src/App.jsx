@@ -15,6 +15,7 @@ import RecipeForm from "./components/recipe/RecipeForm";
 import Login from "./components/auth/Login";
 import Aboutus from "./components/Aboutus";
 import Profile from "./components/profile/Profile";
+import Settings from "./components/settings/Settings";
 
 function App() {
   const router = createBrowserRouter(
@@ -40,6 +41,7 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/aboutus' element={<Aboutus />} />
         <Route path='/profile' element={<Profile />} />
+        <Route path='/settings' element={<Settings />} />
       </Route>
     )
   );

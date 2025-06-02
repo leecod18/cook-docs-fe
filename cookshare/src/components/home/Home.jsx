@@ -133,15 +133,48 @@ const Home = () => {
           {totalPages > 1 && (
             <div className="d-flex justify-content-center mt-4">
               <Pagination>
-                {[...Array(totalPages)].map((_, idx) => (
-                  <Pagination.Item
-                    key={idx + 1}
-                    active={idx + 1 === currentPage}
-                    onClick={() => handlePageChange(idx + 1)}
-                  >
-                    {idx + 1}
-                  </Pagination.Item>
-                ))}
+                <Pagination.First 
+                  onClick={() => handlePageChange(1)}
+                  disabled={currentPage === 1}
+                />
+                <Pagination.Prev 
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                />
+                
+                {[...Array(totalPages)].map((_, idx) => {
+                  // Chỉ hiển thị các trang gần trang hiện tại
+                  if (
+                    idx + 1 === 1 || // Luôn hiển thị trang đầu
+                    idx + 1 === totalPages || // Luôn hiển thị trang cuối
+                    (idx + 1 >= currentPage - 1 && idx + 1 <= currentPage + 1) // Hiển thị trang trước và sau trang hiện tại
+                  ) {
+                    return (
+                      <Pagination.Item
+                        key={idx + 1}
+                        active={idx + 1 === currentPage}
+                        onClick={() => handlePageChange(idx + 1)}
+                      >
+                        {idx + 1}
+                      </Pagination.Item>
+                    );
+                  } else if (
+                    idx + 1 === currentPage - 2 ||
+                    idx + 1 === currentPage + 2
+                  ) {
+                    return <Pagination.Ellipsis key={idx + 1} disabled />;
+                  }
+                  return null;
+                })}
+
+                <Pagination.Next 
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                />
+                <Pagination.Last 
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={currentPage === totalPages}
+                />
               </Pagination>
             </div>
           )}

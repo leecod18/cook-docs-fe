@@ -21,15 +21,21 @@ import Reviews from "../review/Reviews";
 import ReviewForm from "../review/ReviewForm";
 import { toast, ToastContainer } from "react-toastify";
 
-
 const RecipeDetails = () => {
   const [recipe, setRecipe] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [editingReview, setEditingReview] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const[isHovered, setIsHovered] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
   const { recipeId } = useParams();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Lấy userId từ localStorage
+    const userId = localStorage.getItem("userId");
+    setCurrentUserId(userId ? parseInt(userId) : null);
+  }, []);
 
   useEffect(() => {
     const fetchRecipe = async () => {
@@ -53,7 +59,6 @@ const RecipeDetails = () => {
   const handleReviewOperations = async ({ recipeId, reviewInfo }) => {
     let temporaryId;
     if (editingReview) {
-      // Optimistically update the existing review in state
       temporaryId = editingReview.id;
       setReviews((prevReviews) =>
         prevReviews.map((review) =>
@@ -61,18 +66,16 @@ const RecipeDetails = () => {
         )
       );
     } else {
-      // Check if user already has a review
       const existingReview = reviews.find(review => review.user.id === parseInt(reviewInfo.userId));
       if (existingReview) {
         toast.error("You have already reviewed this recipe");
         return;
       }
 
-      // Optimistically add the new review to state
-      temporaryId = nanoid(); // Temporary ID for optimistic update
+      temporaryId = nanoid();
       setReviews((prevReviews) => [
         ...prevReviews,
-        { ...reviewInfo, id: temporaryId, user: { id: parseInt(reviewInfo.userId) } }, // Use temporary ID for UI update
+        { ...reviewInfo, id: temporaryId, user: { id: parseInt(reviewInfo.userId) } },
       ]);
     }
 
@@ -93,7 +96,6 @@ const RecipeDetails = () => {
           )
         );
       } else {
-        // Remove the optimistically added review if adding fails
         setReviews((prevReviews) =>
           prevReviews.filter((review) => review.id !== temporaryId)
         );
@@ -111,7 +113,6 @@ const RecipeDetails = () => {
       prevReviews.filter((rating) => rating.id !== ratingId)
     );
     try {
-      console.log("The reviewId :", { ratingId, recipeId });
       await deleteReview({ ratingId, recipeId });
       toast.success("Review deleted successfully!");
     } catch (error) {
@@ -119,8 +120,6 @@ const RecipeDetails = () => {
       toast.error(error.message);
     }
   };
-
-
 
   const handleDeleteRecipe = async () => {
     try {
@@ -135,8 +134,7 @@ const RecipeDetails = () => {
     }
   };
 
-
-
+  const isRecipeOwner = currentUserId && recipe?.user?.id === currentUserId;
 
   return (
     <Container>
@@ -148,34 +146,37 @@ const RecipeDetails = () => {
               <Card.Body>
                 <h2 className='recipe-title'>{recipe.title}</h2>
 
-                <div
-                  className='review-item'
-                  onMouseEnter={() => setIsHovered(true)}
-                  onMouseLeave={() => setIsHovered(false)}>
-                  {isHovered && (
-                    <div className='review-item-controls'>
-                      <Link
-                        to={`/update-image/${recipe.id}/update-image`}
-                        className='text-info me-4'
-                        style={{ cursor: "pointer" }}>
-                        <FaEdit /> Change Recipe Image
-                      </Link>
+                {isRecipeOwner && (
+                  <div
+                    className='review-item'
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}>
+                    {isHovered && (
+                      <div className='review-item-controls'>
+                        <Link
+                          to={`/update-image/${recipe.id}/update-image`}
+                          className='text-info me-4'
+                          style={{ cursor: "pointer" }}>
+                          <FaEdit /> Change Recipe Image
+                        </Link>
 
-                      <Link
-                        to={`/update/${recipe.id}/update-recipe`}
-                        className='text-info me-4'
-                        style={{ cursor: "pointer" }}>
-                        <FaEdit /> Edit Recipe Details
-                      </Link>
-                      <span
-                        variant='link'
-                        onClick={handleDeleteRecipe}
-                        className='text-danger'>
-                        <FaTrash /> Delete Recipe
-                      </span>
-                    </div>
-                  )}
-                </div>
+                        <Link
+                          to={`/update/${recipe.id}/update-recipe`}
+                          className='text-info me-4'
+                          style={{ cursor: "pointer" }}>
+                          <FaEdit /> Edit Recipe Details
+                        </Link>
+                        <span
+                          variant='link'
+                          onClick={handleDeleteRecipe}
+                          className='text-danger'
+                          style={{ cursor: "pointer" }}>
+                          <FaTrash /> Delete Recipe
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <RecipeDescription description={recipe.description} />
 
@@ -231,26 +232,29 @@ const RecipeDetails = () => {
                 </div>
 
                 <hr className='mb-4' />
-                <div id='review-form'>
-                  <ReviewForm
-                    editingReview={editingReview}
-                    onReviewSubmit={handleReviewOperations}
-                  />
-                </div>
+                {currentUserId && (
+                  <div id='review-form'>
+                    <ReviewForm
+                      editingReview={editingReview}
+                      onReviewSubmit={handleReviewOperations}
+                    />
+                  </div>
+                )}
 
                 <hr className='mb-4' />
                 <Reviews
                   reviews={reviews}
                   onEditReview={handleEditReview}
                   onDeleteReview={handleDeleteReview}
+                  currentUserId={currentUserId}
                 />
 
-                  <Link
-                                to={"/"}
-                                className='btn btn-sm btn-secondary mt-3'
-                                style={{ backgroundColor: "#562f63b5" }}>
-                                <FaArrowLeft /> Back to recipes
-                              </Link>
+                <Link
+                  to={"/"}
+                  className='btn btn-sm btn-secondary mt-3'
+                  style={{ backgroundColor: "#562f63b5" }}>
+                  <FaArrowLeft /> Back to recipes
+                </Link>
               </Card.Body>
             )}
           </Card>
